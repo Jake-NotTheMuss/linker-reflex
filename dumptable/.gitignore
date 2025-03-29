@@ -1,0 +1,10 @@
+dump_*.sh
+*_flex_tables
+*.txt
+/html/
+/scr/
+/scr_sym/
+/sproc/
+RemoteLogger.dll
+RemoteLogger1.dll
+!/Makefile

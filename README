@@ -1,0 +1,15 @@
+linker-reflex
+
+This is a set of scripts I use to reverse engineer the flex lexers in
+linker_modtools. The makefile is used for building a test program from
+my own flex input file. The script reflex.sh uses reflex to reverse the
+lexer program built from my input file, so it can be compared with the
+reversed linker_modtools version.
+
+The 'dumptable' directory contains a script which reverses the linker
+flex tables, first by dumping them from linker_modtools, then providing
+them to reflex.
+
+Reflex can be found here:
+
+      https://github.com/thebabush/reflex

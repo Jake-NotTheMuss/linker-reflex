@@ -1,0 +1,40 @@
+srcdir=@srcdir@
+PYTHON=@PYTHON@
+FLEX=@FLEX@
+CC=@CC@
+REFLEXDIR=@REFLEXDIR@
+
+OUTDIR=output
+PROJECT=@PROJECT@
+EXE=$(PROJECT).exe
+
+@NOMAINT_C@PATTERN_LIST=$(PROJECT).reflex
+
+linker_outdir=linker
+
+all: $(PATTERN_LIST)
+
+$(PATTERN_LIST): $(EXE)
+	sh $(srcdir)/reflex.sh --exe=$(EXE) --outdir=$(OUTDIR) --output=$@ \
+	"--python=$(PYTHON)" --reflexdir=$(REFLEXDIR) --source=lex.yy.c
+
+$(EXE): $(PROJECT).l
+	$(FLEX) -o lex.yy.c $(PROJECT).l
+	$(CC) -g -o $@ lex.yy.c
+
+clean:
+	rm -f $(EXE)
+
+distclean: clean
+	rm -f lex.yy.c Makefile config.cache @DISTCLEAN@
+	rm -rf $(OUTDIR)
+
+Makefile: $(srcdir)/Makefile.in $(srcdir)/configure
+	@echo regenerating $@
+	@./configure > /dev/null
+
+# dump linker flex tables
+dump:
+	@ @MAINT_C@ PYTHON="$(PYTHON)" REFLEX="$(REFLEXDIR)" sh $(srcdir)/dumptable/gen-tables.sh $(srcdir)/dumptable
+
+.PHONY: all clean distclean dump

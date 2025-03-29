@@ -1,0 +1,133 @@
+#!/bin/sh
+
+SRCDIR=`dirname "$0"`
+script=$0
+
+reflex=
+project=`pwd`
+project=`basename "$project"`
+
+ca=config.cache
+
+test -e $ca && . ./$ca
+
+PYTHON=${PYTHON-python}
+CC=${CC-gcc}
+FLEX=${FLEX-flex}
+
+maintainer=0
+test "x$SRCDIR" = x. && maintainer=1
+
+show_help() {
+	cat <<EOF
+Usage: $script [options]
+
+Required arguments:
+  --reflex=REFLEXDIR       Specify reflex directory
+
+Options:
+  --help                   Print this message and
+  --cc=CC                  Specify C compiler
+  --flex=FLEX              Specify location of flex
+  --project=NAME           Name of the project (default is current directory)
+  --python=PYTHON          Specify location of pythnon
+  --config=CONFIGDIR       Use settings from a config.cache file in CONFIGDIR
+
+Environment variables (overridden by --config):
+  CC                       C compiler
+  FLEX                     Location of flex
+  PYTHON                   Location of python
+EOF
+	exit
+}
+
+error() {
+	echo $script: error: $*
+	exit 1
+}
+
+for opt; do
+	case $opt in
+		--help) show_help ;;
+		--cc=*) CC=${opt#*=};;
+		--flex=*) FLEX=${opt#*=};;
+		--python=*) PYTHON=${opt#*=};;
+		--config=*)
+			config=${opt#*=}
+			PYTHON=
+			CC=
+			FLEX=
+			. "$config/config.cache" ;;
+		--reflexdir=*|--reflex-dir=*|--reflex=*) reflex=${opt#*=} ;;
+		--project=*) project=${opt#*=} ;;
+		*) error unrecognized option;;
+	esac
+done
+
+test x$maintainer != x0 && project=none
+
+test "x$reflex" = x && error 'You must specify the reflex directory (--reflex)'
+
+cache() {
+	for arg; do
+		eval val=\$$arg
+		case $val in
+			*[\ \	]*) echo "$arg=\"$val\"" | tee -a $ca ;;
+			*) echo "$arg=$val" | tee -a $ca ;;
+		esac
+	done
+}
+
+cache_env() {
+	for arg; do
+		eval val=\$$arg
+		echo "$arg=\${$arg:-$val}" >> $ca
+		echo "$arg=$val"
+	done
+}
+
+:>$ca
+
+cache_env PYTHON CC FLEX
+cache reflex project
+
+distclean=
+
+MAINT_C=
+NOMAINT_C='#'
+
+if test x$maintainer = x0; then
+	MAINT_C='#'
+	NOMAINT_C=
+	cat >configure  <<EOF
+#!/bin/sh
+"$SRCDIR/configure" \$@
+EOF
+# build tree is out of source; remove local configure in make distclean
+distclean=configure
+fi
+
+cat "$SRCDIR/Makefile.in" | sed -e "
+	:t
+	s&@srcdir@&$SRCDIR&;t t
+	s&@PYTHON@&$PYTHON&;t t
+	s&@CC@&$CC&;t t
+	s&@FLEX@&$FLEX&;t t
+	s&@REFLEXDIR@&$reflex&;t t
+	s&@DISTCLEAN@&$distclean&;t t
+	s&@PROJECT@&$project&;t t
+	s&@MAINT_C@&$MAINT_C&;t t
+	s&@NOMAINT_C@&$NOMAINT_C&;t t
+" > Makefile
+
+if test x$maintainer = x0; then
+test -e "$project.l" || cat >"$project.l" <<EOF
+%option main
+
+%%
+
+rule1
+
+%%
+EOF
+fi

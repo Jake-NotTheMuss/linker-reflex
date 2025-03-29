@@ -1,0 +1,13 @@
+Makefile
+config.cache
+lex.yy.c
+*/configure
+*.exe
+*.reflex
+*.dot
+*.pickle
+*.gpickle
+*.png
+*.pdf
+*.dfa
+*.nfa
