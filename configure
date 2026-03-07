@@ -4,8 +4,6 @@ SRCDIR=`dirname "$0"`
 script=$0
 
 reflex=
-project=`pwd`
-project=`basename "$project"`
 
 ca=config.cache
 
@@ -26,7 +24,7 @@ Required arguments:
   --reflex=REFLEXDIR       Specify reflex directory
 
 Options:
-  --help                   Print this message and
+  --help                   Print this message and exit
   --cc=CC                  Specify C compiler
   --flex=FLEX              Specify location of flex
   --project=NAME           Name of the project (default is current directory)
@@ -46,6 +44,9 @@ error() {
 	exit 1
 }
 
+project_supplied=0
+project_argument=
+
 for opt; do
 	case $opt in
 		--help) show_help ;;
@@ -59,10 +60,17 @@ for opt; do
 			FLEX=
 			. "$config/config.cache" ;;
 		--reflexdir=*|--reflex-dir=*|--reflex=*) reflex=${opt#*=} ;;
-		--project=*) project=${opt#*=} ;;
+		--project=*) project_supplied=1; project_argument=${opt#*=} ;;
 		*) error unrecognized option;;
 	esac
 done
+
+if test x$project_supplied = x0; then
+	project=`pwd`
+	project=`basename "$project"`
+else
+	project=$project_argument
+fi
 
 test x$maintainer != x0 && project=none
 
